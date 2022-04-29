@@ -109,20 +109,20 @@
           </section>
         </main>
       </div>
-
-      <div class="action desktop-only">
-        <ion-button @click="setSafetyStock()">
-          {{ $t("Set safety stock") }}
-          <ion-icon slot="end" :icon="checkmarkDoneOutline" />
-        </ion-button>
-      </div>
-
-      <ion-fab vertical="bottom" horizontal="end" slot="fixed" class="mobile-only">
-        <ion-fab-button @click="setSafetyStock()">
-          <ion-icon :icon="checkmarkDoneOutline" />
-        </ion-fab-button>
-      </ion-fab>
     </ion-content>
+
+    <div class="action desktop-only">
+      <ion-button @click="setSafetyStock()">
+        {{ $t("Set safety stock") }}
+        <ion-icon slot="end" :icon="checkmarkDoneOutline" />
+      </ion-button>
+    </div>
+
+    <ion-fab vertical="bottom" horizontal="end" slot="fixed" class="mobile-only">
+      <ion-fab-button @click="setSafetyStock()">
+        <ion-icon :icon="checkmarkDoneOutline" />
+      </ion-fab-button>
+    </ion-fab>
   </ion-page>
 </template>
 
@@ -212,14 +212,5 @@ export default defineComponent({
 
 ion-item-divider > ion-checkbox {
    margin-inline-end: 16px;
-}
-
-@media (min-width: 991px) {
-  .action {
-    position: absolute;
-    bottom: 25%;
-    left: 50%;
-    transform: translate(-50%, 0);
-  }
 }
 </style>
