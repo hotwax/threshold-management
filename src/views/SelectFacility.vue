@@ -70,42 +70,27 @@
           </ion-item>
 
           <section class="section-grid">
-            <ion-card>
-              <ion-item-divider>
-                Store Group
-                <ion-checkbox slot="end"/>
-              </ion-item-divider>
-              <ion-item>
-                <ion-label>Store name</ion-label>
-                <ion-checkbox slot="end" />
-              </ion-item>
-              <ion-item>
-                <ion-label>Store name</ion-label>
-                <ion-checkbox slot="end" />
-              </ion-item>
-              <ion-item>
-                <ion-label>Store name</ion-label>
-                <ion-checkbox slot="end" />
-              </ion-item>
-            </ion-card>
-            <ion-card>
-              <ion-item-divider>
-                Store Group
-                <ion-checkbox slot="end"/>
-              </ion-item-divider>
-              <ion-item>
-                <ion-label>Store name</ion-label>
-                <ion-checkbox slot="end" />
-              </ion-item>
-              <ion-item>
-                <ion-label>Store name</ion-label>
-                <ion-checkbox slot="end" />
-              </ion-item>
-              <ion-item>
-                <ion-label>Store name</ion-label>
-                <ion-checkbox slot="end" />
-              </ion-item>
-            </ion-card>
+              <ion-card>
+                <ion-item-divider>
+                  {{ $t('WAREHOUSE') }}
+                  <ion-checkbox slot="end" :checked="isAllFacilitiesSelected(warehouseFacilities, 'WAREHOUSE')" @ionChange="selectAllFacilities($event['detail'].checked, warehouseFacilities)" />
+                </ion-item-divider>
+                <ion-item v-for="facility in warehouseFacilities" :key="facility?.facilityId">
+                  <ion-label>{{ facility?.facilityName }}</ion-label>
+                  <ion-checkbox slot="end" :checked="isFacilitySelected(facility?.facilityId)" @ionChange="updateSelectedFacilities($event['detail'].checked, facility)" />
+                </ion-item>
+              </ion-card>
+
+              <ion-card>
+                <ion-item-divider>
+                  {{ $t('RETAIL_STORE') }}
+                  <ion-checkbox slot="end" :checked="isAllFacilitiesSelected(retailFacilities, 'RETAIL_STORE')" @ionChange="selectAllFacilities($event['detail'].checked, retailFacilities)" />
+                </ion-item-divider>
+                <ion-item v-for="facility in retailFacilities" :key="facility?.facilityId">
+                  <ion-label>{{ facility?.facilityName }}</ion-label>
+                  <ion-checkbox slot="end" :checked="isFacilitySelected(facility?.facilityId)" @ionChange="updateSelectedFacilities($event['detail'].checked, facility)" />
+                </ion-item>
+              </ion-card>
           </section>
         </main>
       </div>
@@ -159,6 +144,8 @@ import {
 } from "ionicons/icons";
 import { useRouter } from "vue-router";
 import SafetyStockModal from "@/components/SafetyStockModal.vue";
+import { useStore } from "@/store";
+import { mapGetters } from "vuex";
 
 export default defineComponent({
   name: "SelectFacility",
@@ -185,6 +172,18 @@ export default defineComponent({
     IonTitle,
     IonToolbar
   },
+  data() {
+    return {
+      selectedFacilities: [] as any,
+      warehouseFacilities: [] as any,
+      retailFacilities: [] as any,
+    }
+  },
+  computed: {
+    ...mapGetters({
+      facilities: 'util/getFacilityLocations',
+    })
+  },
   methods: {
     async setSafetyStock() {
       const safetystockmodal = await modalController.create({
@@ -192,14 +191,74 @@ export default defineComponent({
       });
       return safetystockmodal.present();
     },
+    getFacilitiesByType(facilityTypeId: any, facilities: any) {
+      return facilities.filter((facility: any) => facilityTypeId === facility.facilityTypeId)
+    },
+    async getFacilities() {
+      const payload = {
+        "fieldList": ["facilityId", "facilityName", "facilityTypeId"],
+        "viewSize": 50,
+        "entityName": "ProductStoreAndFacility",
+        "noConditionFind": "Y",
+        "distinct": "Y"
+      }
+      await this.store.dispatch('util/getFacilities', payload).then(() => {
+        this.warehouseFacilities = this.getFacilitiesByType('WAREHOUSE', this.facilities);
+        this.retailFacilities = this.getFacilitiesByType('RETAIL_STORE', this.facilities);   
+      })
+    },
+    async updateSelectedFacilities( checked: boolean, facility: any) {
+      const selectedFacility = this.selectedFacilities.find((fac: any) => fac?.facilityId === facility?.facilityId)
+      if(selectedFacility && checked || !selectedFacility && !checked) {
+        return;
+      }
+      checked ? this.selectedFacilities.push(facility) : this.selectedFacilities.splice(this.selectedFacilities.indexOf(facility), 1);
+    },
+    isFacilitySelected(id: any): boolean {
+      const facility = this.selectedFacilities.find((fac: any) => fac?.facilityId === id);
+      return facility?.facilityId === id;
+    },
+    isAllFacilitiesSelected(facilities: any, facilityType: any): boolean {
+      const facilitySelectedByType = this.selectedFacilities.filter((facility: any) => facility?.facilityTypeId === facilityType);
+      return facilities.length === facilitySelectedByType.length;
+    },
+    selectAllFacilities(value: boolean, facilities: any) {
+      const facilitySelectedByType = this.selectedFacilities.filter((facility: any) => facility?.facilityTypeId === facilities[0]?.facilityTypeId);
+
+      if(value) {
+        if(facilitySelectedByType.length === facilities.length) {
+          return;
+        } else {
+          facilities.forEach((fac: any) => {
+            const facility = facilitySelectedByType.find((selectedFac: any) => selectedFac?.facilityId === fac?.facilityId);
+            if(!facility?.facilityId) this.selectedFacilities.push(fac);
+          })
+        }
+      } else {
+        if(facilitySelectedByType.length === facilities.length) {
+          this.selectedFacilities = this.selectedFacilities.reduce((remainingFac: any, facility: any) => {
+            if(facility?.facilityTypeId !== facilities[0]?.facilityTypeId) {
+              remainingFac.push(facility)
+            }
+            return remainingFac;
+          }, []) 
+        }
+      }
+    }
+  },
+  mounted() {
+    this.getFacilities();
   },
   setup() {
     const router = useRouter();
+    const store = useStore();
+
     return {
       checkmarkDoneOutline,
       downloadOutline,
       filterOutline,
-      router
+      router,
+      store
     };
   },
 });
