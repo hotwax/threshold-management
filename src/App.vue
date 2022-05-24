@@ -1,12 +1,12 @@
 <template>
   <ion-app>
-    <ion-menu side="start" menu-id="first" content-id="main">
+    <ion-menu side="start" menu-id="navigation" content-id="main">
       <ion-header>
         <ion-toolbar>
           <ion-title>{{ $t("Menu") }}</ion-title>
         </ion-toolbar>
       </ion-header>
-      <ion-content>
+      <ion-content id="main">
         <ion-list>
           <ion-item button @click="closeMenu(); router.push('/select-product')">
             <ion-icon :icon="options" slot="start" />

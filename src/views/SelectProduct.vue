@@ -2,79 +2,43 @@
   <ion-page>
     <ion-header :translucent="true">
       <ion-toolbar>
-        <ion-menu-button slot="start" />
+        <ion-menu-button slot="start" id="navigation" menu="navigation" />
         <ion-title>{{ $t("Threshold management") }}</ion-title>
         <ion-buttons slot="end">
           <ion-button fill="clear" class="mobile-only">
             <ion-icon :icon="downloadOutline" />
           </ion-button>
-          <ion-button fill="clear" class="mobile-only">
+          <ion-menu-button menu="filter" id="filter" slot="end" v-show="showFilterButton"  @click="openProductFilter()">
             <ion-icon :icon="filterOutline" />
-          </ion-button>
+          </ion-menu-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
+
+     <ion-menu content-id="main" menu-id="filter" type="overlay" side="end">
+      <ion-header>
+        <ion-toolbar>
+          <ion-buttons slot="start">
+            <ion-button @click="closeMenu">
+              <ion-icon :icon="closeOutline" slot="icon-only" />
+            </ion-button>
+          </ion-buttons>
+          <ion-title>{{ $t("Filters")}}</ion-title>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content id="content">
+        <ProductFilter />     
+     </ion-content>
+    </ion-menu>
 
     <ion-content>
       <div class="find">
 
         <aside class="filters desktop-only">
-          <ion-list>
-            <ion-item lines="inset">
-              <ion-label>{{ $t("Threshold") }}</ion-label>
-              <ion-input type="number" :placeholder="$t('global threshold')" v-model="threshold"/>
-            </ion-item>
-            <ion-list-header>
-              <div>
-                <h3>{{ $t("Include") }}</h3>
-                <ion-button fill="clear" color="warning" @click="resetFilters('included')">{{ $t('reset') }}</ion-button>
-              </div>
-            </ion-list-header>
-            <ion-card>
-              <ion-toolbar>
-                <ion-item lines="none">
-                  <ion-label>{{ $t("Tags") }}</ion-label>
-                  <ion-button fill="clear" slot="end" size="small" @click="searchFilter('tags', 'tagsFacet', 'tags', 'included')">
-                    <ion-label>{{ $t('add') }}</ion-label>
-                    <ion-icon :icon="addCircleOutline" />
-                  </ion-button>
-                </ion-item>
-              </ion-toolbar>
-              <ion-card-content>
-                <ion-chip v-for="(tag, index) in appliedFilters['included']['tags']" :key="index">
-                  <ion-icon :icon="pricetagOutline" />
-                  <ion-label>{{ tag }}</ion-label>
-                  <ion-icon :icon="closeCircle" @click="removeFilters('included', 'tags', tag)"/>
-                </ion-chip>
-              </ion-card-content>
-            </ion-card>
-          </ion-list>
-          <ion-list>
-            <ion-list-header>
-              <div>
-                <h3>{{ $t("Exclude") }}</h3>
-                <ion-button fill="clear" color="warning" @click="resetFilters('excluded')">{{ $t('reset') }}</ion-button>
-              </div>
-            </ion-list-header>
-            <ion-card>
-              <ion-toolbar>
-                <ion-item lines="none">
-                  <ion-label>{{ $t("Tags") }}</ion-label>
-                  <ion-button fill="clear" slot="end" size="small" @click="searchFilter('tags', 'tagsFacet', 'tags', 'excluded')">
-                    <ion-label>{{ $t('add') }}</ion-label>
-                    <ion-icon :icon="addCircleOutline" />
-                  </ion-button>
-                </ion-item>
-              </ion-toolbar>
-              <ion-card-content>
-                <ion-chip v-for="(tag, index) in appliedFilters['excluded']['tags']" :key="index">
-                  <ion-icon :icon="pricetagOutline" />
-                  <ion-label>{{ tag }}</ion-label>
-                  <ion-icon :icon="closeCircle" @click="removeFilters('excluded', 'tags', tag)"/>
-                </ion-chip>
-              </ion-card-content>
-            </ion-card>
-          </ion-list>
+          <div class="product-filters">
+            <ProductFilter />
+          </div>
         </aside>
 
         <main class="main">
@@ -108,7 +72,7 @@
                 <ion-card>
                   <Image :src="variant.mainImageUrl" />
                   <ion-item lines="none">
-                    <ion-label>
+                    <ion-label class="ion-text-wrap">
                       {{ variant.productName }}
                       <p v-if="variant.color">{{ $t("Color") }}: {{ variant.color }}</p>
                       <p v-if="variant.size">{{ $t("Size") }}: {{ variant.size }}</p>
@@ -148,33 +112,31 @@ import {
   IonButton,
   IonButtons,
   IonCard,
-  IonCardContent,
-  IonChip,
   IonContent,
   IonFab,
   IonFabButton,
   IonHeader,
   IonIcon,
-  IonInput,
   IonItem,
   IonLabel,
-  IonList,
-  IonListHeader,
+  IonMenu,
   IonMenuButton,
   IonPage,
   IonSearchbar,
   IonTitle,
   IonToolbar,
+  menuController,
   modalController,
   IonInfiniteScroll,
   IonInfiniteScrollContent
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { arrowForwardOutline, downloadOutline, filterOutline, saveOutline, pricetagOutline, closeCircle, addCircleOutline, albumsOutline } from 'ionicons/icons';
+import { arrowForwardOutline, closeOutline,  downloadOutline, filterOutline, saveOutline, pricetagOutline, closeCircle, addCircleOutline, albumsOutline } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
 import { mapGetters, useStore } from 'vuex';
 import SaveThresholdModal from '@/components/SaveThresholdModal.vue';
 import ProductFilterModal from '@/components/ProductFilterModal.vue';
+import ProductFilter from '@/components/ProductFilter.vue';
 
 export default defineComponent({
   name: 'SelectProduct',
@@ -182,8 +144,6 @@ export default defineComponent({
     IonButton,
     IonButtons,
     IonCard,
-    IonCardContent,
-    IonChip,
     IonContent,
     IonFab,
     IonFabButton,
@@ -191,33 +151,53 @@ export default defineComponent({
     IonIcon,
     IonInfiniteScroll,
     IonInfiniteScrollContent,
-    IonInput,
     IonItem,
     IonLabel,
-    IonList,
-    IonListHeader,
+    IonMenu,
     IonMenuButton,
     IonPage,
     IonSearchbar,
     IonTitle,
     IonToolbar,
-    Image
+    Image,
+    ProductFilter
   },
   computed: {
     ...mapGetters({
       products: 'product/getProducts',
       isScrollable: 'product/isScrollable',
       appliedFilters: 'product/getAppliedFilters',
-      query: 'product/getQuery'
+      query: 'product/getQuery',
+      threshold: 'product/getThreshold'
     })
   },
+
   data () {
     return {
-      threshold: '' as any,
-      queryString: ''
+      queryString: '',
+      showFilterButton: false,
     }
   },
+  async mounted() {
+    this.showFilters();
+  },
+
   methods: {
+    showFilters(){
+      const el = document.querySelector('.product-filters') as Element;
+      const observer = new window.IntersectionObserver(([entry]) => {
+        this.showFilterButton = !entry.isIntersecting;
+      }, {
+        root: null
+      })
+      observer.observe(el);
+    },
+    async openProductFilter() {
+      await menuController.open('filter');
+    },
+    async closeMenu() {
+      await menuController.close();
+    },
     searchProducts(event: any) {
       this.queryString = event.target.value;
       this.getProducts();
@@ -308,6 +288,7 @@ export default defineComponent({
 
     return {
       arrowForwardOutline,
+      closeOutline,
       downloadOutline,
       filterOutline,
       router,
@@ -323,6 +304,9 @@ export default defineComponent({
 </script>
 
 <style scoped>
+ion-menu {
+  --width: 100%;
+}
 
 .section-grid {
   grid-template-columns: repeat(auto-fill, 200px);
@@ -339,6 +323,9 @@ ion-list-header > div {
 }
 
 @media (min-width: 991px) {
+  ion-menu {
+    --width: 375px;
+  }
   .find {
     padding: var( --spacer-lg);
     gap: var(--spacer-lg);
