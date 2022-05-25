@@ -117,7 +117,10 @@ export default defineComponent({
   data() {
     return {
       jobStatus: this.status,
-      minDateTime: DateTime.now().toISO()
+      minDateTime: DateTime.now().toISO(),
+      jobEnums: [
+        ...JSON.parse(process.env?.VUE_APP_JOB_ENUMS as string) as any
+      ]
     }
   },
   props: ["job", "title", "status", "type"],
@@ -126,7 +129,8 @@ export default defineComponent({
       getJobStatus: 'job/getJobStatus',
       getJob: 'job/getJob',
       shopifyConfigId: 'user/getShopifyConfigId',
-      currentEComStore: 'user/getCurrentEComStore'
+      currentEComStore: 'user/getCurrentEComStore',
+      getCurrentEComStore:'user/getCurrentEComStore'
     }),
     generateFrequencyOptions(): any {
       const optionDefault = [{
@@ -236,7 +240,11 @@ export default defineComponent({
       if (job?.statusId === 'SERVICE_DRAFT') {
         this.store.dispatch('job/scheduleService', job)
       } else if (job?.statusId === 'SERVICE_PENDING') {
-        this.store.dispatch('job/updateJob', job)
+        this.store.dispatch('job/updateJob', job).then( async (resp) => {
+          if(resp) {
+            await this.store.dispatch('job/fetchPendingJobs', { eComStoreId: this.getCurrentEComStore.productStoreId, viewSize: process.env.VUE_APP_VIEW_SIZE, viewIndex: 0, jobEnums: this.jobEnums });
+          }
+        })
       }
     },
     getTime (time: any) {
