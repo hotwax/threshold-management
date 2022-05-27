@@ -24,6 +24,7 @@
     <ion-content>
       <main>
         <section v-if="segmentSelected === 'pending'">
+          <ion-button @click="openReorderModal">{{ $t('Reorder export jobs') }}</ion-button>
           <!-- Empty state -->
           <div v-if="pendingJobs?.length === 0">
             <p class="ion-text-center">{{ $t("There are no jobs pending right now")}}</p>
@@ -267,6 +268,7 @@ import { Plugins } from '@capacitor/core';
 import { showToast } from '@/utils'
 import JobHistoryModal from '@/components/JobHistoryModal.vue';
 import { DateTime } from 'luxon';
+import JobsReorderModal from '@/components/JobsReorderModal.vue';
 
 export default defineComponent({
   name: "ThresholdUpdates",
@@ -322,7 +324,8 @@ export default defineComponent({
       getCurrentEComStore:'user/getCurrentEComStore',
       isPendingJobsScrollable: 'job/isPendingJobsScrollable',
       isRunningJobsScrollable: 'job/isRunningJobsScrollable',
-      isHistoryJobsScrollable: 'job/isHistoryJobsScrollable'
+      isHistoryJobsScrollable: 'job/isHistoryJobsScrollable',
+      getJob: 'job/getJob'
     })
   },
   mounted(){
@@ -511,6 +514,32 @@ export default defineComponent({
       createAnimation()
         .addAnimation([gapAnimation, revealAnimation])
         .play();
+    },
+    async openReorderModal() {
+      await this.store.dispatch('job/fetchJobs', {
+        inputFields: {
+          statusId: 'SERVICE_PENDING',
+          statusId_op: 'equals',
+          systemJobEnumId: 'JOB_EXP_PROD_THRSHLD',
+          systemJobEnumId_op: "equals"
+        },
+        viewSize: 20
+      })
+      const reorderModal = await modalController.create({
+        component: JobsReorderModal,
+        componentProps: {
+          "jobsForReorder": this.getJob('JOB_EXP_PROD_THRSHLD'),
+          "initialJobsOrder": JSON.parse(JSON.stringify(this.getJob('JOB_EXP_PROD_THRSHLD')))
+        }
+      })
+
+      reorderModal.onDidDismiss().then((result: any) => {
+        if (result?.data?.isJobsUpdated) {
+          this.store.dispatch('job/fetchPendingJobs', {eComStoreId: this.getCurrentEComStore.productStoreId, viewSize:process.env.VUE_APP_VIEW_SIZE, viewIndex:0, jobEnums: this.jobEnums});
+        }
+      })
+
+      return reorderModal.present();
     }
   },
   ionViewWillEnter() {
