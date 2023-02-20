@@ -34,6 +34,7 @@
   "Export product thresholds": "Export product thresholds",
   "Export product threshold jobs": "Export product threshold jobs",
   "Failed": "Failed",
+  "Failed to update service": "Failed to update service",
   "Failed to update some jobs": "Failed to update some jobs",
   "Failed to schedule service, hence other jobs are not updated": "Failed to schedule service, hence other jobs are not updated",
   "Go to OMS": "Go to OMS",
