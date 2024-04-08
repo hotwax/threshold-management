@@ -6,7 +6,7 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ $t('Export product threshold jobs') }}</ion-title>
+      <ion-title>{{ translate('Export product threshold jobs') }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
@@ -54,7 +54,7 @@ import { DateTime } from 'luxon';
 import { JobService } from '@/services/JobService';
 import { hasError, showToast } from '@/utils';
 import logger from '@/logger';
-import { translate } from '@/i18n';
+import { translate } from '@hotwax/dxp-components';
 import { Actions, hasPermission } from '@/authorization'
 
 export default defineComponent({
@@ -178,7 +178,8 @@ export default defineComponent({
       closeOutline,
       hasPermission,
       saveOutline,
-      store
+      store,
+      translate
     };
   },
 });
